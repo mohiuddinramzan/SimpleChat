@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SimpleChat Tests</title>
+  <style>
+    body { font: 15px/1.5 system-ui, "Noto Sans Bengali", sans-serif; margin: 0; padding: 12px; background: #fff; color: #111; }
+    h1 { font-size: 1.2rem; margin: 0 0 8px; }
+    h2 { font-size: 1rem; margin: 16px 0 4px; border-bottom: 1px solid #ccc; }
+    .summary { font-weight: 700; padding: 8px; background: #eef; border-radius: 6px; }
+    .test { padding: 2px 0; overflow-wrap: anywhere; }
+    .pass { color: #0a6b3d; }
+    .fail { color: #b00020; font-weight: 700; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; background: #fff0f0; padding: 6px; border-radius: 6px; margin: 2px 0 8px; }
+    .warn { background: #fff4e5; padding: 8px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>SimpleChat Tests</h1>
+  <p class="warn">এই পাতা আলাদা test ডেটাবেসে (simplechat-test-db) চলে, আসল চ্যাট ডেটা ছোঁয়া হয় না। নির্দিষ্ট test চালাতে URL-এর শেষে <code>?grep=block</code> যোগ করুন।</p>
+  <div id="results"></div>
+  <script src="setup.js"></script>
+  <script type="module" src="run-all.js"></script>
+</body>
+</html>
