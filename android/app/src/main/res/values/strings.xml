@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SimpleChat</string>
+    <string name="external_blocked">বাইরের লিংক খোলা যায় না। এটি একটি লোকাল ডেমো।</string>
+    <string name="download_unsupported">এই ডাউনলোড সমর্থিত নয়।</string>
+    <string name="export_cancelled">ব্যাকআপ সংরক্ষণ বাতিল হয়েছে।</string>
+    <string name="export_saved">ব্যাকআপ ফাইল সংরক্ষিত হয়েছে।</string>
+    <string name="export_failed">ব্যাকআপ ফাইল সংরক্ষণ করা যায়নি।</string>
+    <string name="renderer_crashed">ওয়েব ভিউ বন্ধ হয়ে গিয়েছিল। অ্যাপ আবার চালু হচ্ছে।</string>
+    <string name="file_chooser_unavailable">ফাইল বাছাই করার অ্যাপ পাওয়া যায়নি।</string>
+</resources>

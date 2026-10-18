@@ -2,6 +2,7 @@ import { el } from '../utils/dom.js';
 
 let openCount = 0;
 let seq = 0;
+const openDialogs = [];
 
 const KIND = { primary: 'btn-primary', danger: 'btn-danger', ghost: 'btn-ghost' };
 
@@ -24,6 +25,8 @@ export function openDialog({ title, body = [], actions = [], dismissible = true,
     function close(value) {
       if (settled) return;
       settled = true;
+      const at = openDialogs.indexOf(entry);
+      if (at >= 0) openDialogs.splice(at, 1);
       document.removeEventListener('keydown', onKey, true);
       backdrop.remove();
       openCount -= 1;
@@ -54,12 +57,25 @@ export function openDialog({ title, body = [], actions = [], dismissible = true,
       onclick: (e) => { if (e.target === backdrop && dismissible) close(null); },
     }, [dialog]);
 
+    const entry = { close, dismissible };
+    openDialogs.push(entry);
     openCount += 1;
     setAppInert(true);
     document.body.append(backdrop);
     document.addEventListener('keydown', onKey, true);
     (initialFocus || buttons[0])?.focus();
   });
+}
+
+/**
+ * Android Back বোতামের জন্য: খোলা ডায়ালগ থাকলে true ফেরত দেয় (dismissible হলে বন্ধও করে),
+ * না থাকলে false। native অংশ evaluateJavascript দিয়ে এটি ডাকে।
+ */
+export function closeTopDialog() {
+  const top = openDialogs[openDialogs.length - 1];
+  if (!top) return false;
+  if (top.dismissible) top.close(null);
+  return true;
 }
 
 /** destructive কাজের আগে: কী মুছবে তা items-এ লিখুন। ফেরত: true/false */

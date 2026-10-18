@@ -1,0 +1,71 @@
+name: Android Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      # Uses the committed wrapper jar when present. Otherwise generates the
+      # official wrapper (jar + scripts) so the build can still run.
+      - name: Ensure Gradle Wrapper
+        working-directory: android
+        run: |
+          if [ -f gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "Using the committed Gradle wrapper."
+          else
+            echo "gradle-wrapper.jar is not committed; generating it."
+            gradle wrapper --gradle-version 8.7
+          fi
+          chmod +x gradlew
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      # Module is ":app" and no custom archive name is set, so the Android Gradle
+      # Plugin writes app/build/outputs/apk/debug/app-debug.apk. This step fails
+      # loudly (and lists every APK found) if that ever stops being true.
+      - name: Verify APK output path
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          if [ ! -f "$APK" ]; then
+            echo "::error::APK not found at $APK"
+            find android -name '*.apk' -print
+            exit 1
+          fi
+          ls -l "$APK"
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SimpleChat-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14

@@ -6,6 +6,7 @@ import { makeInitials } from '../js/utils/validators.js';
 import { chatRoomRoute } from '../js/screens/chat-room.js';
 import { chatsRoute } from '../js/screens/chats.js';
 import { routes } from '../js/screens/index.js';
+import { openDialog, closeTopDialog } from '../js/components/dialog.js';
 import { ChatService } from '../js/services/chat-service.js';
 import { MessageService } from '../js/services/message-service.js';
 import * as repo from '../js/storage/repository.js';
@@ -167,5 +168,22 @@ describe('Screens and source hygiene', () => {
       assert.ok(!/https?:\/\//i.test(src), `external URL in js/${f}`);
       assert.ok(!/\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon/.test(src), `network API in js/${f}`);
     }
+  });
+});
+
+describe('Android Back hook', () => {
+  it('closeTopDialog closes the open dialog and reports whether one existed', async () => {
+    assert.equal(closeTopDialog(), false, 'nothing open');
+    const pending = openDialog({ title: 'Test', actions: [{ label: 'OK', value: true }] });
+    assert.equal(closeTopDialog(), true, 'dialog was open');
+    assert.equal(await pending, null, 'dismissed like Escape');
+    assert.equal(closeTopDialog(), false, 'closed now');
+  });
+
+  it('a non-dismissible dialog swallows Back but stays open', async () => {
+    const pending = openDialog({ title: 'Test', dismissible: false, actions: [{ label: 'OK', value: 'ok' }] });
+    assert.equal(closeTopDialog(), true);
+    document.querySelector('.dialog-actions button').click();
+    assert.equal(await pending, 'ok');
   });
 });

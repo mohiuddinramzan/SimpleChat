@@ -76,7 +76,7 @@ simplechat/
 ## সীমাবদ্ধতা (Phase 2-এর আগে সমাধান বাকি)
 
 - Android WebView-তে ফাইল ডাউনলোড ও ফাইল বাছাই native কোড ছাড়া কাজ নাও করতে পারে। ততদিন ব্যাকআপে "টেক্সট কপি করুন" ও "পেস্ট করুন" ব্যবহার করুন।
-- `assets/` (আইকন, favicon) এখনো খালি।
+- `assets/` ফোল্ডারে ওয়েব-আইকন নেই। অ্যাপের লঞ্চার আইকন Android প্রজেক্টেই আছে।
 
 ## কোন ফাইলগুলো commit করবেন
 
@@ -85,4 +85,69 @@ simplechat/
 ## অবস্থা
 
 - **Phase 1 (Web):** কোড লেখা সম্পূর্ণ। "Test চালানো" অংশ অনুযায়ী ফোনে চালিয়ে ফল যাচাই করা বাকি।
-- **Phase 2 (Android APK):** শুরু হয়নি (`android/` ও `.github/workflows/` এই জিপে নেই)।
+- **Phase 2 (Android APK):** কোড লেখা সম্পূর্ণ (`android/`, `.github/workflows/android-build.yml`)। কোনো বিল্ড এখনও চালানো হয়নি।
+
+---
+
+# Android APK (Phase 2)
+
+## কীভাবে কাজ করে
+
+- `android/` একটি WebView র‍্যাপার। বিল্ডের সময় Gradle রুটের `index.html`, `css/`, `js/`, `assets/` APK-র ভেতরে কপি করে (`tests/` নয়)। ইন্টারনেটে থাকা কোনো সাইট লাগে না।
+- অ্যাপ লোড হয় `https://appassets.androidplatform.net/assets/www/index.html` থেকে (`WebViewAssetLoader`)। ES modules চালাতে `file://` কাজ করত না, তাই এই পদ্ধতি।
+- **কোনো permission নেই:** ইন্টারনেট, স্টোরেজ, ক্যামেরা, মাইক, কন্টাক্ট বা লোকেশন কিছুই চায় না।
+- WebView-তে file/content access বন্ধ, `addJavascriptInterface` নেই, বাইরের লিংক ও অন্য সব নেটওয়ার্ক রিকোয়েস্ট ব্লক।
+- Back বোতাম: খোলা ডায়ালগ আগে বন্ধ হয়, তারপর পেছনের পেজ, শেষে অ্যাপ থেকে বের হয়।
+- ব্যাকআপ এক্সপোর্ট: সিস্টেমের "Save as" স্ক্রিন খোলে। ইমপোর্টে সিস্টেম ফাইল-বাছাই খোলে। কোনো স্টোরেজ permission লাগে না।
+- Application ID: `io.github.mohiuddinramzan.simplechat` (বদলাতে চাইলে `android/app/build.gradle`-এ `namespace` ও `applicationId`, আর `MainActivity.java`-র `package` লাইন ও ফোল্ডারের নাম একসঙ্গে বদলাতে হবে)।
+
+## GitHub-এ push (Termux)
+
+```bash
+cd ~/simplechat
+chmod +x android/gradlew
+git add .
+git update-index --chmod=+x android/gradlew
+git commit -m "Phase 2: Android WebView wrapper and APK workflow"
+git push
+```
+
+## APK বানানো ও নামানো
+
+1. GitHub-এ repository খুলুন → **Actions** ট্যাব → **Android Build**।
+2. `main`-এ push করলে নিজে থেকে চলে। হাতে চালাতে **Run workflow** চাপুন।
+3. সবুজ টিক এলে ওই run খুলুন। নিচে **Artifacts** অংশে `SimpleChat-debug-apk` আছে, সেটি চাপলে ZIP নামে (১৪ দিন থাকে)।
+4. ফোনের ফাইল ম্যানেজারে ZIP খুলে `app-debug.apk` বের করুন।
+5. APK ট্যাপ করুন। বলা হলে ওই অ্যাপের (ব্রাউজার বা ফাইল ম্যানেজার) জন্য **"Install unknown apps"** চালু করুন।
+
+এটি **debug** APK, Play Store-এর জন্য নয়। কোনো keystore বা secret প্রয়োজন হয় না, আর কখনো commit করবেন না।
+
+## Gradle Wrapper
+
+- `android/gradle/wrapper/gradle-wrapper.properties` (Gradle 8.7) আর একটি সরল `android/gradlew` আছে। `gradle-wrapper.jar` (বাইনারি) এই প্রজেক্টে নেই।
+- **কিছু না করলেও চলবে:** jar না থাকলে workflow `gradle wrapper` চালিয়ে অফিসিয়াল wrapper তৈরি করে নেয়।
+- **ঐচ্ছিক (repository-তেই jar রাখতে):** Termux-এ
+  ```bash
+  cd ~/simplechat/android
+  curl -fL -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
+  unzip -t gradle/wrapper/gradle-wrapper.jar | tail -1
+  ```
+  শেষ লাইনে `No errors detected` আসতে হবে, নইলে ফাইলটি মুছে ফেলুন। এরপর `git add` করে push করুন।
+
+## সমস্যা হলে
+
+| লক্ষণ | সম্ভাব্য কারণ ও করণীয় |
+|---|---|
+| Actions-এ লাল ❌ | Run খুলে লাল ধাপ ও তার নিচের লাল লাইনগুলো কপি করে পাঠান |
+| `Verify APK output path` ব্যর্থ | বিল্ড হয়েছে কিন্তু APK অন্য নামে/জায়গায়। ধাপটির লগে খুঁজে পাওয়া সব `.apk`-র তালিকা দেখাবে |
+| `Could not find ... androidx...` | সাময়িক নেটওয়ার্ক সমস্যা, **Re-run jobs** দিন |
+| `SDK location not found` / `platform not found` | `Set up Android SDK` ধাপের লগ পাঠান |
+| ইনস্টলে "App not installed" | আগের কোনো সংস্করণ অন্য সই দিয়ে ইনস্টল আছে। সেটি আনইনস্টল করে আবার চেষ্টা করুন |
+| অ্যাপ খুলে সাদা পর্দা | অ্যাপ বন্ধ করে আবার খুলুন। না হলে "অ্যাপ লোড করা যায়নি" পাতা আসার কথা, আসলে তা জানান |
+| ব্যাকআপ "Save as" না আসা | বিষয়টি জানান, সঙ্গে "টেক্সট কপি করুন" বিকল্প ব্যবহার করুন |
+| Workflow-ই দেখা যাচ্ছে না | `.github/workflows/android-build.yml` repository-র রুটে আছে কিনা এবং `main` branch-এ push হয়েছে কিনা দেখুন |
+
+## যা এখনও যাচাই হয়নি
+
+- কোনো Android বিল্ড চালানো হয়নি (এখানে Gradle ও Android SDK ছিল না), তাই APK আদৌ তৈরি হবে কিনা নিশ্চিত নয়।
+- ফোনে WebView, Back বোতাম, কীবোর্ড, ডার্ক মোড ও ব্যাকআপ সেভ/ইমপোর্ট আসল ডিভাইসে পরীক্ষা হয়নি।

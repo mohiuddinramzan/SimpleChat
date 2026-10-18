@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'io.github.mohiuddinramzan.simplechat'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'io.github.mohiuddinramzan.simplechat'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.activity:activity:1.9.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
+
+// The web app lives in the repository root (one level above android/).
+// Copy only the shipped web files into the APK assets; tests/ and android/ are never included.
+tasks.register('syncWebAssets', Sync) {
+    from(rootProject.projectDir.parentFile) {
+        include 'index.html', 'css/**', 'js/**', 'assets/**'
+    }
+    into layout.projectDirectory.dir('src/main/assets/www')
+}
+
+tasks.matching { it.name == 'preBuild' }.configureEach {
+    dependsOn 'syncWebAssets'
+}

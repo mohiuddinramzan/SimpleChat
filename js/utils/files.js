@@ -1,4 +1,12 @@
 export function downloadText(filename, text, mime = 'application/json') {
+  // Android WebView নিজে blob ডাউনলোড সংরক্ষণ করতে পারে না। native অংশ ডাউনলোড-ইভেন্টে এই মান পড়ে
+  // "Save as" দেখায়। অন্য সময় এটি দ্রুত মুছে ফেলা হয়।
+  const handoff = { filename, text };
+  globalThis.__simplechatLastExport = handoff;
+  setTimeout(() => {
+    if (globalThis.__simplechatLastExport === handoff) globalThis.__simplechatLastExport = null;
+  }, 30000);
+
   const blob = new Blob([text], { type: `${mime};charset=utf-8` });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

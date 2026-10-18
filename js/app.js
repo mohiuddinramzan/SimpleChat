@@ -9,6 +9,7 @@ import { ChatService } from './services/chat-service.js';
 import { MessageService } from './services/message-service.js';
 import { NotificationService } from './services/notification-service.js';
 import { routes } from './screens/index.js';
+import { closeTopDialog } from './components/dialog.js';
 
 function fatalView(error) {
   const detail = error && (error.cause?.name || error.name) ? `(${error.cause?.name || error.name})` : '';
@@ -108,6 +109,9 @@ export async function bootstrap() {
     if (mode === 'guest' && current) return '/chats';
     return null;
   });
+
+  // Android wrapper (native -> JS): Back বোতাম চাপলে খোলা ডায়ালগ আগে বন্ধ হয়
+  globalThis.__simplechatHandleBack = () => closeTopDialog();
 
   trackViewport();
   installGlobalHandlers();

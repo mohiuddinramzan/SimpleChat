@@ -5,3 +5,8 @@ local.properties
 .gradle/
 build/
 *.log
+.idea/
+*.iml
+captures/
+# copied from the web app at build time
+android/app/src/main/assets/www/
